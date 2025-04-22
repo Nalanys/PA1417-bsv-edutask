@@ -75,3 +75,14 @@ class TestGetUserByEmail:
             mockfullmatch.return_value = False
             with pytest.raises(ValueError):
                 uc.get_user_by_email(email=email)
+
+    def test_8(self):
+        email = 'user@example.com'
+        mockedDAO = MagicMock()
+        mockedDAO.find.side_effect = Exception('Database error')
+        uc = UserController(dao=mockedDAO)
+        with patch('src.controllers.usercontroller.re.fullmatch') as mockfullmatch:
+            mockfullmatch.return_value = True
+            with pytest.raises(Exception):
+                uc.get_user_by_email(email=email)
+                
