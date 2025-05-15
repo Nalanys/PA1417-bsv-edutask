@@ -19,9 +19,8 @@ class TestGetUserByEmail:
         mockedDAO = MagicMock()
         mockedDAO.find.return_value = []
         uc = UserController(dao=mockedDAO)
-        with patch('src.controllers.usercontroller.re.fullmatch') as mockfullmatch:
-            mockfullmatch.return_value = True
-            assert uc.get_user_by_email(email=email) is None
+
+        assert uc.get_user_by_email(email=email) is None
 
     def test_3(self):
         email = 'user@example.com'
