@@ -9,22 +9,20 @@ describe('Todo tests', () => {
     before(function () {
       testNumber = 0
       cy.request('POST', 'http://localhost:5000/populate').then((response) => {
-        uid = response.body.users[0];
-
-        // Now make the second request using uid
-        cy.request('GET', `http://localhost:5000/users/${uid}`).then((response) => {
+        console.log(response);
+        cy.request('GET', "http://localhost:5000/users/bymail/jane.doe@gmail.com").then((response) => {
           email = response.body.email;
           name = response.body.firstName + " " + response.body.lastName;
-
+          uid = response.body._id.$oid; 
           // You can log or use email and name here
-          cy.log(`User: ${name}, Email: ${email}`);
+          cy.log(`User: ${name}, Email: ${email}, id:${uid}`);
+          cy.request('GET', `http://localhost:5000/tasks/ofuser/${uid}`).then((response) => {
+            tasks = response.body
+            console.log(response.body)
+          });
         });
-        cy.request('GET', `http://localhost:5000/tasks/ofuser/${uid}`).then((response) => {
-          tasks = response.body
-          console.log(response.body)
-        });
+        
       });
-
     });
       
   
@@ -69,10 +67,10 @@ describe('Todo tests', () => {
         .should('be.disabled');
     })
 
-   it('adding item to todo list', () => {
+    it('adding item to todo list', () => {
       const task = tasks[0];
       console.log(task);
-
+      let newTodoId;
       const newTodo = { taskid: task._id.$oid, description: 'HELLO', done: 'false' };
       console.log(newTodo);
 
@@ -84,49 +82,132 @@ describe('Todo tests', () => {
       }).then((postResponse) => {
         expect(postResponse.status).to.eq(200);
         const createdTodo = postResponse.body;
+        newTodoId = postResponse.body._id.$oid;
+        console.log("Inne nytt id", newTodoId);
 
+        cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
+
+        cy.get('li.todo-item')
+          .should('contain.text', `${newTodo.description}`)
+
+        
+        if(newTodoId) {
+          console.log("HEEEEJ");
+          cy.request({
+            method: 'DELETE',
+            url: `http://localhost:5000/todos/byid/${newTodoId}`
+          }).then((response) => {});
+        }
         expect(createdTodo.description).to.eq(newTodo.description);
         expect(String(createdTodo.done)).to.eq(newTodo.done);
       });
+        
+        // console.log("Nytt id", newTodoId);
+        
+        
     });
 
-    // it('setting todo item to done', () => {
+    it('setting todo item to done', () => {
+      const todoId = tasks[0].todos[0]._id.$oid;
+      console.log("NEEEEW ID", todoId);
+      const updateData = {
+        $set: {
+          done: true
+        }
+      };
+      cy.request({
+        method: 'PUT',
+        url: `http://localhost:5000/todos/byid/${todoId}`,
+        form: true,
+        body: {
+          data: JSON.stringify(updateData)
+        }
+      }).then((response) => {
+        cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
 
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.checker')
-    //     .should('have.class', 'unchecked')
+        cy.contains('li.todo-item', `${tasks[0].todos[0].description}`)
+          .find('span.checker')
+          .should('have.class', 'checked')
+      });
+      
+    });
 
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.checker')
-    //     .click()
+    it('setting todo item to active', () => {
+      const todoId = tasks[0].todos[1]._id.$oid;
+      console.log("NEEEEW ID", todoId);
+      const updateData = {
+        $set: {
+          done: true
+        }
+      };
+      cy.request({
+        method: 'PUT',
+        url: `http://localhost:5000/todos/byid/${todoId}`,
+        form: true,
+        body: {
+          data: JSON.stringify(updateData)
+        }
+      }).then((response) => {
 
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.checker')
-    //     .should('have.class', 'checked')
-    // })
+        const updateData2 = {
+          $set: {
+            done: false
+          }
+        };
+        cy.request({
+          method: 'PUT',
+          url: `http://localhost:5000/todos/byid/${todoId}`,
+          form: true,
+          body: {
+            data: JSON.stringify(updateData2)
+          }
+        }).then((response) => {
+          
+          cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
 
-    // it('setting todo item to active', () => {
+          cy.contains('li.todo-item', `${tasks[0].todos[1].description}`)
+            .find('span.checker')
+            .should('have.class', 'unchecked')
+        });
+        // cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
 
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.checker')
-    //     .should('have.class', 'checked')
+        // cy.contains('li.todo-item', `${tasks[0].todos[0].description}`)
+        //   .find('span.checker')
+        //   .should('have.class', 'unchecked')
+      });
+    })
 
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.checker')
-    //     .click()
+    it('delete todo item', () => {
+      const task = tasks[0];
+      console.log(task);
+      let newTodoId;
+      const newTodo = { taskid: task._id.$oid, description: 'HELLO', done: 'false' };
+      console.log(newTodo);
 
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.checker')
-    //     .should('have.class', 'unchecked')
-    // })
+      cy.request({
+        method: 'POST',
+        url: `http://localhost:5000/todos/create`,
+        form: true,
+        body: newTodo
+      }).then((postResponse) => {
+        expect(postResponse.status).to.eq(200);
+        const createdTodo = postResponse.body;
+        newTodoId = postResponse.body._id.$oid;
+        console.log("Inne nytt id", newTodoId);
 
-    // it('delete todo item', () => {
-    //   cy.contains('li.todo-item', 'Test Adding Task')
-    //     .find('span.remover')
-    //     .click()
+        
+        if(newTodoId) {
+          console.log("HEEEEJ");
+          cy.request({
+            method: 'DELETE',
+            url: `http://localhost:5000/todos/byid/${newTodoId}`
+          }).then((response) => {});
+        }
+      });
+      cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
 
-    //   cy.get('ul.todo-list')
-    //     .should('not.contain', 'Test Adding Task')
-    // })
+      cy.get('ul.todo-list')
+        .should('not.contain', `${newTodo.description}`)
+    })
 
 })
