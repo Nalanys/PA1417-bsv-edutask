@@ -14,7 +14,6 @@ describe('Todo tests', () => {
           email = response.body.email;
           name = response.body.firstName + " " + response.body.lastName;
           uid = response.body._id.$oid; 
-          // You can log or use email and name here
           cy.log(`User: ${name}, Email: ${email}, id:${uid}`);
           cy.request('GET', `http://localhost:5000/tasks/ofuser/${uid}`).then((response) => {
             tasks = response.body
@@ -27,25 +26,6 @@ describe('Todo tests', () => {
       
   
     beforeEach(function () {
-      // // enter the main main page
-      // cy.visit('http://localhost:3000')
-      // cy.contains('div', 'Email Address')
-      //   .find('input[type=text]')
-      //   .type(email)
-  
-      // // submit the form on this page
-      // cy.get('form')
-      //   .submit()
-
-      // // Doing last item when testing so it actually test the newest added item
-      // cy.get('div.title-overlay')
-      //   .filter(':contains("Testing Task")')
-      //   .last()
-      //   .closest('.container-element')
-      //   .click();
-
-      // cy.get('.popup')
-      //   .should('be.visible')
       cy.visit('http://localhost:3000')
       cy.contains('div', 'Email Address')
         .find('input[type=text]')
@@ -101,9 +81,6 @@ describe('Todo tests', () => {
         expect(createdTodo.description).to.eq(newTodo.description);
         expect(String(createdTodo.done)).to.eq(newTodo.done);
       });
-        
-        // console.log("Nytt id", newTodoId);
-        
         
     });
 
@@ -169,11 +146,6 @@ describe('Todo tests', () => {
             .find('span.checker')
             .should('have.class', 'unchecked')
         });
-        // cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
-
-        // cy.contains('li.todo-item', `${tasks[0].todos[0].description}`)
-        //   .find('span.checker')
-        //   .should('have.class', 'unchecked')
       });
     })
 
