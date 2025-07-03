@@ -9,7 +9,6 @@ describe('Todo tests', () => {
     before(function () {
       testNumber = 0
       cy.request('POST', 'http://localhost:5000/populate').then((response) => {
-        console.log(response);
         cy.request('GET', "http://localhost:5000/users/bymail/jane.doe@gmail.com").then((response) => {
           email = response.body.email;
           name = response.body.firstName + " " + response.body.lastName;
@@ -17,7 +16,6 @@ describe('Todo tests', () => {
           cy.log(`User: ${name}, Email: ${email}, id:${uid}`);
           cy.request('GET', `http://localhost:5000/tasks/ofuser/${uid}`).then((response) => {
             tasks = response.body
-            console.log(response.body)
           });
         });
         
@@ -49,10 +47,8 @@ describe('Todo tests', () => {
 
     it('adding item to todo list', () => {
       const task = tasks[0];
-      console.log(task);
       let newTodoId;
       const newTodo = { taskid: task._id.$oid, description: 'HELLO', done: 'false' };
-      console.log(newTodo);
 
       cy.request({
         method: 'POST',
@@ -63,7 +59,6 @@ describe('Todo tests', () => {
         expect(postResponse.status).to.eq(200);
         const createdTodo = postResponse.body;
         newTodoId = postResponse.body._id.$oid;
-        console.log("Inne nytt id", newTodoId);
 
         cy.contains('div.title-overlay', `${tasks[0].title}`).click({ force: true });
 
@@ -72,7 +67,6 @@ describe('Todo tests', () => {
 
         
         if(newTodoId) {
-          console.log("HEEEEJ");
           cy.request({
             method: 'DELETE',
             url: `http://localhost:5000/todos/byid/${newTodoId}`
@@ -86,7 +80,6 @@ describe('Todo tests', () => {
 
     it('setting todo item to done', () => {
       const todoId = tasks[0].todos[0]._id.$oid;
-      console.log("NEEEEW ID", todoId);
       const updateData = {
         $set: {
           done: true
@@ -111,7 +104,6 @@ describe('Todo tests', () => {
 
     it('setting todo item to active', () => {
       const todoId = tasks[0].todos[1]._id.$oid;
-      console.log("NEEEEW ID", todoId);
       const updateData = {
         $set: {
           done: true
@@ -151,10 +143,8 @@ describe('Todo tests', () => {
 
     it('delete todo item', () => {
       const task = tasks[0];
-      console.log(task);
       let newTodoId;
       const newTodo = { taskid: task._id.$oid, description: 'HELLO', done: 'false' };
-      console.log(newTodo);
 
       cy.request({
         method: 'POST',
@@ -163,13 +153,10 @@ describe('Todo tests', () => {
         body: newTodo
       }).then((postResponse) => {
         expect(postResponse.status).to.eq(200);
-        const createdTodo = postResponse.body;
         newTodoId = postResponse.body._id.$oid;
-        console.log("Inne nytt id", newTodoId);
 
         
         if(newTodoId) {
-          console.log("HEEEEJ");
           cy.request({
             method: 'DELETE',
             url: `http://localhost:5000/todos/byid/${newTodoId}`
